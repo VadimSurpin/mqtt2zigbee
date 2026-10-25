@@ -12,7 +12,7 @@ jobs:
   pre-commit-hygiene:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check for tabs/CRLF/trailing whitespace in own sources
         run: |
           ! git grep -n -I -P '\r$' -- 'main' 'components/*' ':!components/esp-zigbee-lib' ':!components/web_ui/frontend'
