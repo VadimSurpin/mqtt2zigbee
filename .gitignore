@@ -1,0 +1,20 @@
+# Build output
+build/
+build_*/
+managed_components/
+dependencies.lock
+sdkconfig
+sdkconfig.old
+build_output.txt
+
+# ESP-IDF checkout used for local builds
+/esp-idf/
+
+# Local tooling / IDE
+.claude/
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+build.bat
+*.log
