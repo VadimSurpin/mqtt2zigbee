@@ -60,7 +60,7 @@ jobs:
           cp fw/mqtt2zigbee-merged.bin "mqtt2zigbee-${v}-merged.bin"
           cp fw/mqtt2zigbee.bin "mqtt2zigbee-${v}-app.bin"
           sha256sum mqtt2zigbee-${v}-*.bin > SHA256SUMS
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           files: |
