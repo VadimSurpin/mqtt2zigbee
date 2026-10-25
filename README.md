@@ -29,6 +29,25 @@ relays and sensors — without any extra gateway software.
 - Wi-Fi/Zigbee coexistence, OTA-ready partition table with rollback, status LED,
   long-press factory reset.
 
+## Screenshots
+
+| Status | Wi-Fi |
+|--------|-------|
+| ![Status](docs/img/status.png) | ![Wi-Fi](docs/img/wifi.png) |
+| **MQTT** | **Zigbee pairing** |
+| ![MQTT](docs/img/mqtt.png) | ![Pairing](docs/img/pair.png) |
+
+> Screenshots are rendered from `tools/mock_server.py`, which mimics the web UI; the
+> device discovery page on real firmware additionally has the source selector.
+
+## Tested with
+
+- **Board:** ESP32-C6
+- **MQTT source:** Wiren Board controller with **WB-MRC** relay modules
+
+Other boards, brokers and Zigbee2MQTT mode have not been verified on hardware yet —
+reports are welcome.
+
 ## Hardware
 
 - ESP32-C6 board with ≥ 8 MB flash (`partitions.csv` uses two 3 MB OTA slots).
