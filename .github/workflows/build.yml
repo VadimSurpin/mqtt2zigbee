@@ -1,0 +1,68 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build firmware
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4.1
+          target: esp32c6
+          path: .
+          command: idf.py build
+
+      - name: Create merged flash image
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4.1
+          target: esp32c6
+          path: .
+          command: >-
+            idf.py merge-bin -o mqtt2zigbee-merged.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            build/mqtt2zigbee.bin
+            build/mqtt2zigbee-merged.bin
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+            build/flasher_args.json
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: fw
+      - name: Rename for release
+        run: |
+          v="${GITHUB_REF_NAME}"
+          cp fw/mqtt2zigbee-merged.bin "mqtt2zigbee-${v}-merged.bin"
+          cp fw/mqtt2zigbee.bin "mqtt2zigbee-${v}-app.bin"
+          sha256sum mqtt2zigbee-${v}-*.bin > SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            mqtt2zigbee-*.bin
+            SHA256SUMS
