@@ -32,7 +32,7 @@ jobs:
           command: >-
             idf.py merge-bin -o mqtt2zigbee-merged.bin
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: firmware
           path: |
