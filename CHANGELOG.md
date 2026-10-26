@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1] - 2026-10-26
+
+### Added
+- Wi-Fi page shows the router SSID/IP the gateway is connected to (STA).
+- Wi-Fi page control to disable/enable the setup access point (disabling is only
+  possible while connected to a router). The setting is persisted, exported as
+  `wifi.ap_disabled` in the YAML backup, and kept in sync with the BOOT-button AP toggle.
+  If the router is unreachable at boot the AP stays up, so you are never locked out.
+
 ## [1.0.0] - 2026-10-25
 
 ### Added

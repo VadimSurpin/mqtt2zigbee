@@ -19,6 +19,7 @@
 #define UI_PASS_KEY     "ui_pass"
 #define UI_LANG_KEY     "ui_lang"
 #define DISC_MODE_KEY   "disc_mode"
+#define AP_OFF_KEY      "ap_off"
 
 /* Discovery source shown on the Devices page. */
 #define DISC_MODE_WB      0   /* Wiren Board, built-in virtual devices hidden */
@@ -40,6 +41,7 @@ typedef struct {
     char ui_pass[64];
     char ui_lang[4];
     uint8_t disc_mode;
+    uint8_t ap_off;   /* 1 = turn the setup AP off once connected to a router */
 } app_config_data_t;
 
 void app_config_init(void);
@@ -67,5 +69,7 @@ esp_err_t app_config_set_language(const char *lang);
 const char* app_config_get_language(void);
 esp_err_t app_config_set_discovery_mode(uint8_t mode);
 uint8_t app_config_get_discovery_mode(void);
+esp_err_t app_config_set_ap_disabled(bool off);
+bool app_config_get_ap_disabled(void);
 
 #endif

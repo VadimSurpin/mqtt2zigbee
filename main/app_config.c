@@ -21,6 +21,7 @@ void app_config_init(void)
     strncpy(s_config.ui_user, "admin",   sizeof(s_config.ui_user)  - 1);
     strncpy(s_config.ui_pass, "gateway", sizeof(s_config.ui_pass) - 1);
     s_config.disc_mode = DISC_MODE_AUTO;
+    s_config.ap_off = 0;
 
     nvs_handle_t handle;
     esp_err_t err = nvs_open(APP_CONFIG_NAMESPACE, NVS_READONLY, &handle);
@@ -67,6 +68,9 @@ void app_config_init(void)
     uint8_t mode = DISC_MODE_AUTO;
     if (nvs_get_u8(handle, DISC_MODE_KEY, &mode) == ESP_OK && mode <= DISC_MODE_Z2M)
         s_config.disc_mode = mode;
+    uint8_t ap_off = 0;
+    if (nvs_get_u8(handle, AP_OFF_KEY, &ap_off) == ESP_OK)
+        s_config.ap_off = ap_off ? 1 : 0;
 
     nvs_close(handle);
 
@@ -297,4 +301,22 @@ uint8_t app_config_get_discovery_mode(void)
 {
     if (!s_initialized) app_config_init();
     return s_config.disc_mode;
+}
+
+esp_err_t app_config_set_ap_disabled(bool off)
+{
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(APP_CONFIG_NAMESPACE, NVS_READWRITE, &handle);
+    if (err != ESP_OK) return err;
+    s_config.ap_off = off ? 1 : 0;
+    err = nvs_set_u8(handle, AP_OFF_KEY, s_config.ap_off);
+    if (err == ESP_OK) err = nvs_commit(handle);
+    nvs_close(handle);
+    return err;
+}
+
+bool app_config_get_ap_disabled(void)
+{
+    if (!s_initialized) app_config_init();
+    return s_config.ap_off != 0;
 }

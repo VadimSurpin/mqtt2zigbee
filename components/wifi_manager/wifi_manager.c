@@ -135,3 +135,26 @@ void wifi_manager_toggle_ap(const char *ap_ssid)
         ESP_LOGI(TAG, "AP started — AP+STA mode, SSID: %s", ap_ssid);
     }
 }
+
+bool wifi_manager_ap_active(void)
+{
+    wifi_mode_t mode = WIFI_MODE_NULL;
+    esp_wifi_get_mode(&mode);
+    return mode == WIFI_MODE_APSTA || mode == WIFI_MODE_AP;
+}
+
+bool wifi_manager_set_ap(bool on, const char *ap_ssid)
+{
+    if (on == wifi_manager_ap_active()) return true;
+    if (!on && !s_connected) return false;
+    wifi_manager_toggle_ap(ap_ssid);
+    return true;
+}
+
+bool wifi_manager_get_sta_ssid(char *out, size_t len)
+{
+    wifi_ap_record_t ap;
+    if (!s_connected || esp_wifi_sta_get_ap_info(&ap) != ESP_OK) return false;
+    snprintf(out, len, "%s", (const char *)ap.ssid);
+    return true;
+}

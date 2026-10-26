@@ -122,6 +122,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
         status_led_set(LED_STATE_WIFI_CONNECTED);
+        if (app_config_get_ap_disabled())
+            wifi_manager_set_ap(false, "ZigbeeGW");
 
         if (!s_net_init_done) {
             s_net_init_done = true;
@@ -159,6 +161,8 @@ static void factory_reset_wrapper(void)
 static void wifi_mode_toggle(void)
 {
     wifi_manager_toggle_ap("ZigbeeGW");
+    /* Keep the persisted "AP disabled" setting (web UI / YAML) in sync with the button. */
+    app_config_set_ap_disabled(!wifi_manager_ap_active());
 }
 
 void app_main(void)

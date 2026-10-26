@@ -675,6 +675,8 @@ static const char *rssi_icon(int rssi)
     return "bi-wifi-1";
 }
 
+static void html_esc(char *out, size_t sz, const char *in);
+
 static esp_err_t wifi_get_handler(httpd_req_t *req)
 {
     if (!is_authenticated(req)) return send_redirect(req, "/login");
@@ -689,6 +691,50 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     const char *saved_ssid = app_config_get_wifi_ssid();
 
     dash_page_open(t(L_NAV_WIFI), "/wifi");
+
+    /* Current STA link + access-point control */
+    char sta_ssid[33] = {0};
+    bool sta_up = wifi_manager_get_sta_ssid(sta_ssid, sizeof(sta_ssid));
+    bool ap_on  = wifi_manager_ap_active();
+    HS("<div class=\"card mb-3\"><div class=\"card-body\">");
+    if (sta_up) {
+        HS("<div class=\"d-flex align-items-center gap-2 mb-2\">"
+           "<span class=\"badge bg-success\">");
+        HS(t(L_STATUS_CONNECTED));
+        HS("</span><span class=\"text-muted small\">");
+        HS(t(L_WIFI_STA_NOW));
+        char esc_ssid[140];
+        html_esc(esc_ssid, sizeof(esc_ssid), sta_ssid);
+        HF("</span><strong>%s</strong>", esc_ssid);
+        HF("<span class=\"text-muted small ms-auto\">%s</span></div>", wifi_manager_get_ip());
+    } else {
+        HS("<div class=\"d-flex align-items-center gap-2 mb-2\">"
+           "<span class=\"badge bg-secondary\">");
+        HS(t(L_STATUS_NOT_CONNECTED));
+        HS("</span><span class=\"text-muted small\">");
+        HS(t(L_WIFI_STA_NONE));
+        HS("</span></div>");
+    }
+    HS("<div class=\"d-flex align-items-center gap-2 flex-wrap\"><i class=\"bi bi-broadcast me-1\"></i><span class=\"me-auto\">");
+    HS(t(ap_on ? L_WIFI_AP_ON : L_WIFI_AP_OFF));
+    HS("</span>");
+    if (ap_on) {
+        HF("<form method=\"post\" action=\"/wifi/ap\" class=\"m-0\">"
+           "<input type=\"hidden\" name=\"ap\" value=\"off\">"
+           "<button type=\"submit\" class=\"btn btn-outline-danger btn-sm\"%s>", sta_up ? "" : " disabled");
+        HS(t(L_WIFI_AP_DISABLE_BTN));
+        HS("</button></form>");
+    } else {
+        HS("<form method=\"post\" action=\"/wifi/ap\" class=\"m-0\">"
+           "<input type=\"hidden\" name=\"ap\" value=\"on\">"
+           "<button type=\"submit\" class=\"btn btn-outline-primary btn-sm\">");
+        HS(t(L_WIFI_AP_ENABLE_BTN));
+        HS("</button></form>");
+    }
+    HS("</div><div class=\"form-text mt-2\">");
+    HS(t(sta_up ? L_WIFI_AP_WARN : L_WIFI_AP_NEED_STA));
+    HS("</div></div></div>");
+
     HS("<div class=\"card\">"
        "<div class=\"card-header\"><h6 class=\"mb-0\">"
        "<i class=\"bi bi-wifi me-2\"></i>");
@@ -788,6 +834,20 @@ static esp_err_t wifi_post_handler(httpd_req_t *req)
        still reach this server and see the connected-IP success page. */
     wifi_manager_connect(ssid, password);
     return send_redirect(req, "/wifi/connecting");
+}
+
+static esp_err_t wifi_ap_post_handler(httpd_req_t *req)
+{
+    if (!is_authenticated(req)) return send_redirect(req, "/login");
+    if (!form_read(req))
+        return send_redirect(req, "/wifi?error=Read+error.");
+    char ap[8] = {0};
+    form_get(s_form_buf, "ap", ap, sizeof(ap));
+    bool on = strcmp(ap, "on") == 0;
+    if (!wifi_manager_set_ap(on, "ZigbeeGW"))
+        return send_redirect(req, "/wifi?error=Connect+to+a+router+first.");
+    app_config_set_ap_disabled(!on);
+    return send_redirect(req, "/wifi");
 }
 
 static esp_err_t wifi_connecting_handler(httpd_req_t *req)
@@ -1935,6 +1995,7 @@ static esp_err_t export_yaml_handler(httpd_req_t *req)
     HS("wifi:\n");
     yaml_kv("  ", "ssid",     app_config_get_wifi_ssid());
     yaml_kv("  ", "password", app_config_get_wifi_password());
+    HF("  ap_disabled: %s\n", app_config_get_ap_disabled() ? "true" : "false");
     HS("mqtt:\n");
     yaml_kv("  ", "host",      app_config_get_mqtt_host());
     HF("  port: %d\n", app_config_get_mqtt_port() ? app_config_get_mqtt_port() : 1883);
@@ -1998,6 +2059,7 @@ static esp_err_t import_post_handler(httpd_req_t *req)
     bool in_dev = false;
     char dev_type[32]={0}, dev_topic[128]={0}, dev_mfr[33]={0}, dev_model[33]={0};
     char wifi_ssid[64]={0}, wifi_pass[64]={0};
+    int ap_disabled = -1;   /* -1 = key absent, leave setting unchanged */
     char mqtt_host[64]={0}, mqtt_port_s[8]={0}, mqtt_ci[32]={0};
     char mqtt_user[32]={0}, mqtt_pass[64]={0};
     cJSON *dev_arr = cJSON_CreateArray();
@@ -2028,6 +2090,8 @@ static esp_err_t import_post_handler(httpd_req_t *req)
         if (sec == S_WIFI) {
             if (!strcmp(key, "ssid"))         strncpy(wifi_ssid, val, sizeof(wifi_ssid)-1);
             else if (!strcmp(key, "password")) strncpy(wifi_pass, val, sizeof(wifi_pass)-1);
+            else if (!strcmp(key, "ap_disabled"))
+                ap_disabled = (!strcmp(val, "true") || !strcmp(val, "1") || !strcmp(val, "yes")) ? 1 : 0;
         } else if (sec == S_MQTT) {
             if (!strcmp(key, "host"))          strncpy(mqtt_host,    val, sizeof(mqtt_host)-1);
             else if (!strcmp(key, "port"))     strncpy(mqtt_port_s,  val, sizeof(mqtt_port_s)-1);
@@ -2066,6 +2130,8 @@ static esp_err_t import_post_handler(httpd_req_t *req)
         app_config_save_wifi(wifi_ssid, wifi_pass);
         app_config_set_provisioned(true);
     }
+    if (ap_disabled >= 0)
+        app_config_set_ap_disabled(ap_disabled == 1);
     if (mqtt_host[0]) {
         int port = mqtt_port_s[0] ? atoi(mqtt_port_s) : 1883;
         if (port <= 0) port = 1883;
@@ -2475,6 +2541,7 @@ static const httpd_uri_t s_uris[] = {
     {.uri = "/wifi/scan",             .method = HTTP_GET,  .handler = wifi_scan_handler},
     {.uri = "/wifi/scan",             .method = HTTP_POST, .handler = wifi_scan_handler},
     {.uri = "/wifi",                  .method = HTTP_POST, .handler = wifi_post_handler},
+    {.uri = "/wifi/ap",               .method = HTTP_POST, .handler = wifi_ap_post_handler},
     {.uri = "/wifi/connecting",       .method = HTTP_GET,  .handler = wifi_connecting_handler},
     {.uri = "/wifi/connected",        .method = HTTP_GET,  .handler = wifi_connected_handler},
     {.uri = "/mqtt",                  .method = HTTP_GET,  .handler = mqtt_get_handler},
