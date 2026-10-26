@@ -35,7 +35,7 @@ static const led_mode_t s_modes[] = {
     [LED_STATE_NOT_CONFIGURED] = {   0,   0, 200, PAT_SLOW   },  /* blue   */
     [LED_STATE_WIFI_SEARCHING] = { 200, 180,   0, PAT_FAST   },  /* yellow */
     [LED_STATE_WIFI_CONNECTED] = {   0, 160, 160, PAT_DOUBLE },  /* cyan   */
-    [LED_STATE_MQTT_CONNECTED] = {   0, 160,   0, PAT_SOLID  },  /* green  */
+    [LED_STATE_MQTT_CONNECTED] = {   0,   0,   0, PAT_SOLID  },  /* off (full green was too bright) */
     [LED_STATE_CONN_ERROR]     = { 200,   0,   0, PAT_TRIPLE },  /* red    */
 };
 

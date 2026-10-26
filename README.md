@@ -48,11 +48,32 @@ relays and sensors — without any extra gateway software.
 Other boards, brokers and Zigbee2MQTT mode have not been verified on hardware yet —
 reports are welcome.
 
+## Status LED
+
+RGB LED on GPIO 8 (`STATUS_LED_GPIO`).
+
+| State | Colour | Pattern | Meaning |
+|-------|--------|---------|---------|
+| Not configured | Blue | slow pulse, 1 Hz | Setup mode, no Wi-Fi saved — join the `ZigbeeGW` AP |
+| Wi-Fi connecting | Yellow | fast blink, 5 Hz | Connecting to the router |
+| Wi-Fi connected | Cyan | double pulse every 2 s | Got an IP, MQTT not connected yet |
+| Operational | — | **off** | Wi-Fi and MQTT connected |
+| Connection error | Red | triple flash every 2 s | Wi-Fi or MQTT connection lost |
+
+## Button
+
+BOOT button on GPIO 9:
+
+| Action | Press | Effect |
+|--------|-------|--------|
+| Short press | < 0.8 s | Toggle the setup access point on/off (also updates the saved "AP disabled" setting) |
+| Long press | hold 3 s | Factory reset — erases Wi-Fi, MQTT, devices and credentials; LED flashes yellow/red |
+| — | 0.8 – 3 s | Ignored |
+
 ## Hardware
 
 - ESP32-C6 board with ≥ 8 MB flash (`partitions.csv` uses two 3 MB OTA slots).
-- Status LED on GPIO 8 (change `STATUS_LED_GPIO` in `main/main.c`).
-- BOOT button on GPIO 9: short press toggles the access point, hold 3 s for factory reset.
+- Status LED on GPIO 8 (change `STATUS_LED_GPIO` in `main/main.c`) and BOOT button on GPIO 9 — see above.
 
 ## Build
 

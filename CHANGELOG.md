@@ -2,6 +2,9 @@
 
 ## [1.0.1] - 2026-10-26
 
+### Changed
+- Status LED is now off when fully operational (MQTT connected); green was too bright.
+
 ### Added
 - Wi-Fi page shows the router SSID/IP the gateway is connected to (STA).
 - Wi-Fi page control to disable/enable the setup access point (disabling is only

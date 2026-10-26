@@ -5,7 +5,7 @@ typedef enum {
     LED_STATE_NOT_CONFIGURED,  // AP provisioning mode  — blue,  slow pulse 1 Hz
     LED_STATE_WIFI_SEARCHING,  // STA connecting        — yellow, fast blink 5 Hz
     LED_STATE_WIFI_CONNECTED,  // IP obtained, no MQTT  — cyan,   double-pulse / 2 s
-    LED_STATE_MQTT_CONNECTED,  // Fully operational     — green,  solid
+    LED_STATE_MQTT_CONNECTED,  // Fully operational     — LED off
     LED_STATE_CONN_ERROR,      // Connection failed     — red,    triple-flash / 2 s
 } led_state_t;
 
